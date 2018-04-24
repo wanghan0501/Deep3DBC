@@ -19,6 +19,7 @@ import torch
 from torch.autograd import Variable
 from torch.backends import cudnn
 from torch.nn import DataParallel
+from torch.optim.lr_scheduler import StepLR
 
 from dataset.loader import get_test_loader, get_train_loader
 from layers.bounding_box_layer import PredictBoundingBox
@@ -46,6 +47,10 @@ parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum (default: 0.9)')
 parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)')
+parser.add_argument('--lr-decay-step', '--lrds', default=5, type=int,
+                    metavar='LRDS', help='learning rate decay step (default: 5)')
+parser.add_argument('--lr-decay-rate', '--lrdr', default=0.9, type=float,
+                    metavar='LRDR', help='learning rate decay rate (default: 0.9)')
 parser.add_argument('--save-freq', default='1', type=int, metavar='S',
                     help='save frequency (default: 1)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
@@ -106,6 +111,7 @@ def main():
     sys.stdout = Logger(logfile)
   args.n_gpu = set_gpu(args.gpu)
   # load net to gpu devices
+  # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
   net = net.cuda()
   loss = loss.cuda()
   cudnn.benchmark = True
@@ -118,32 +124,23 @@ def main():
 
   train_loader = get_train_loader(args)
 
-  def get_lr_origin(epoch):
-    if epoch <= args.epochs * 0.5:
-      lr = args.lr
-    elif epoch <= args.epochs * 0.8:
-      lr = 0.1 * args.lr
-    else:
-      lr = 0.01 * args.lr
-    return lr
-
   optimizer = torch.optim.SGD(
     net.parameters(),
     args.lr,
-    momentum=0.9,
+    momentum=args.momentum,
     weight_decay=args.weight_decay)
+  scheduler = StepLR(optimizer, step_size=args.lr_decay_step, gamma=args.lr_decay_rate)
 
   for epoch in range(start_epoch, args.epochs + 1):
-    train(train_loader, net, loss, epoch, optimizer, get_lr_origin, save_dir)
+    scheduler.step()
+    for param_group in optimizer.param_groups:
+      print("Current LR : {}".format(param_group['lr']))
+    train(train_loader, net, loss, epoch, optimizer, save_dir)
 
 
-def train(data_loader, net, loss, epoch, optimizer, get_lr, save_dir):
+def train(data_loader, net, loss, epoch, optimizer, save_dir):
   start_time = time.time()
   net.train()
-  lr = get_lr(epoch)
-
-  for param_group in optimizer.param_groups:
-    param_group['lr'] = lr
 
   metrics = []
   for i, (data, target, coord) in enumerate(data_loader):
@@ -156,7 +153,6 @@ def train(data_loader, net, loss, epoch, optimizer, get_lr, save_dir):
     optimizer.zero_grad()
     loss_output[0].backward()
     optimizer.step()
-
     loss_output[0] = loss_output[0].data[0]
     metrics.append(loss_output)
 

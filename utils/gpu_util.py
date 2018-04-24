@@ -10,7 +10,7 @@ import os
 import pynvml
 
 
-def get_freeId():
+def get_free_id():
   pynvml.nvmlInit()
 
   def get_free_ratio(id):
@@ -32,7 +32,7 @@ def get_freeId():
 
 
 def set_gpu(gpuinput):
-  freeids = getFreeId()
+  freeids = get_free_id()
   if gpuinput == 'all':
     gpus = freeids
   else:
