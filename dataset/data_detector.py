@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-  
+
+"""
+Created by Wang Han on 2018/4/19 15:16.
+E-mail address is hanwang.0501@gmail.com.
+Copyright © 2017 Wang Han. SCU. All Rights Reserved.
+"""
+
 import os
 import random
 import time
@@ -11,15 +19,16 @@ from scipy.ndimage.interpolation import rotate
 from torch.utils.data import Dataset
 
 
-def get_item(i, dataset, split):
-  return dataset.__getitem__(i, split)
+class DetectorDataset(Dataset):
+  def __init__(self, config, phase='train', split_comber=None):
 
-
-class Detector(Dataset):
-  def __init__(self, data_dir, split_path, config, phase='train', split_comber=None):
-
-    assert (phase == 'train' or phase == 'val' or phase == 'test')
+    assert (phase == 'train' or phase == 'test')
     self.phase = phase
+    self.data_dir = config['preprocess_result_path']
+    if self.phase == 'train':
+      self.split_path = config['train_split_path']
+    else:
+      self.split_path = config['test_split_path']
     self.max_stride = config['max_stride']
     self.stride = config['stride']
     sizelim = config['sizelim'] / config['reso']
@@ -31,47 +40,41 @@ class Detector(Dataset):
     self.augtype = config['augtype']
     self.pad_value = config['pad_value']
     self.split_comber = split_comber
-    idcs = np.load(split_path)
 
+    idcs = np.load(self.split_path)
     if phase != 'test':
       idcs = [f for f in idcs if (f not in self.blacklist)]
-
-    if phase != 'test':
-      idcs = [f for f in idcs if len(f) < 40]
-
-    self.filenames = [os.path.join(data_dir, '%s_clean.npy' % idx.zfill(3)) for idx in idcs]
+    self.filenames = [os.path.join(self.data_dir, '%s_clean.npy' % idx.zfill(3)) for idx in idcs]
 
     labels = []
 
     for idx in idcs:
-      l = np.load(os.path.join(data_dir, '%s_label.npy' % idx.zfill(3)))
-      if np.all(l == 0):
-        l = np.array([])
-      labels.append(l)
+      label = np.load(os.path.join(self.data_dir, '%s_label.npy' % idx.zfill(3)))
+      if np.all(label == 0):
+        label = np.array([])
+      labels.append(label)
 
     self.sample_bboxes = labels
-    num_labels = 0
 
+    num_labels = 0
     if self.phase != 'test':
       self.bboxes = []
-      for i, l in enumerate(labels):
-        if len(l) > 0:
-          for t in l:
-            if t[3] > sizelim:
-              self.bboxes += [[np.concatenate([[i], t])]] * 2
+      for index, label in enumerate(labels):
+        if len(label) > 0:
+          for t in label:
+            r = t[3]
+            if r > sizelim:
+              self.bboxes += [[np.concatenate([[index], t])]] * 2
               num_labels = num_labels + 1
-
-            if t[3] > sizelim2:
-              self.bboxes += [[np.concatenate([[i], t])]] * 1
+            if r > sizelim2:
+              self.bboxes += [[np.concatenate([[index], t])]] * 1
               num_labels = num_labels + 1
-            if t[3] > sizelim3:
-              self.bboxes += [[np.concatenate([[i], t])]] * 1
+            if r > sizelim3:
+              self.bboxes += [[np.concatenate([[index], t])]] * 1
               num_labels = num_labels + 1
-        else:
-          xx = 1
-      print(num_labels)
+      print('number labels is: {}'.format(num_labels))
       self.bboxes = np.concatenate(self.bboxes, axis=0)
-      print(len(self.bboxes))
+      print('length of bounding boxes is: {}'.format(len(self.bboxes)))
     self.crop = Crop(config)
     self.label_mapping = LabelMapping(config, self.phase)
 
@@ -79,7 +82,6 @@ class Detector(Dataset):
 
     t = time.time()
     np.random.seed(int(str(t % 1)[2:7]))  # seed according to time
-
     is_random_img = False
     if self.phase != 'test':
       if idx >= len(self.bboxes):
@@ -225,7 +227,7 @@ class Crop(object):
         start.append(np.random.randint(e, s))  # !
       else:
         start.append(int(target[i]) - crop_size[i] / 2 + np.random.randint(-bound_size / 2, bound_size / 2))
-    # import pdb;pdb.set_trace()
+
     normstart = np.array(start).astype('float32') / np.array(imgs.shape[1:]) - 0.5
     normsize = np.array(crop_size).astype('float32') / np.array(imgs.shape[1:])
     xx, yy, zz = np.meshgrid(np.linspace(normstart[0], normstart[0] + normsize[0], self.crop_size[0] / self.stride),

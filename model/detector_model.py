@@ -1,33 +1,20 @@
-from .layers import *
+# -*- coding: utf-8 -*-  
 
-config = {}
-config['anchors'] = [10.0, 30.0, 60.0]
-config['chanel'] = 1
-config['crop_size'] = [128, 128, 128]
-config['stride'] = 4
-config['max_stride'] = 16
-config['num_neg'] = 800
-config['th_neg'] = 0.02
-config['th_pos_train'] = 0.5
-config['th_pos_val'] = 1
-config['num_hard'] = 2
-config['bound_size'] = 12
-config['reso'] = 1
-config['sizelim'] = 0.
-config['sizelim2'] = 20
-config['sizelim3'] = 50
+"""
+Created by Wang Han on 2018/4/19 15:35.
+E-mail address is hanwang.0501@gmail.com.
+Copyright © 2017 Wang Han. SCU. All Rights Reserved.
+"""
+import torch
+from torch import nn
 
-config['aug_scale'] = True
-config['r_rand_crop'] = 0.3
-config['pad_value'] = 170
-config['augtype'] = {'flip': True, 'swap': False, 'scale': True, 'rotate': False}
-config['blacklist'] = ['0006877219_20160118', '0011981291_20140529', '0016378107_20160420_BC', '0015324859_20160706_BC',
-                       '0000069572_20160808_0']
+from layers.post_residue_layer import PostRes
+from utils.config_util import config
 
 
-class Net(nn.Module):
+class Model(nn.Module):
   def __init__(self):
-    super(Net, self).__init__()
+    super(Model, self).__init__()
     # The first few layers consumes the most memory, so use simple convolution to save memory.
     # Call these layers preBlock, i.e., before the residual blocks of later layers.
     self.preBlock = nn.Sequential(
@@ -113,15 +100,6 @@ class Net(nn.Module):
     out = self.output(comb2)
     size = out.size()
     out = out.view(out.size(0), out.size(1), -1)
-    # out = out.transpose(1, 4).transpose(1, 2).transpose(2, 3).contiguous()
     out = out.transpose(1, 2).contiguous().view(size[0], size[2], size[3], size[4], len(config['anchors']), 5)
-    # out = out.view(-1, 5)
 
     return out
-
-
-def get_model():
-  net = Net()
-  loss = Loss(config['num_hard'])
-  get_pbb = GetPBB(config)
-  return config, net, loss, get_pbb

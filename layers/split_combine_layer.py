@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-  
+
+"""
+Created by Wang Han on 2018/4/19 15:32.
+E-mail address is hanwang.0501@gmail.com.
+Copyright © 2017 Wang Han. SCU. All Rights Reserved.
+"""
+
 import numpy as np
 
 
@@ -61,10 +69,7 @@ class SplitComb():
       stride = self.stride
     if margin == None:
       margin = self.margin
-    # import pdb;pdb.set_trace()
     if (nzhw == None).any():
-      import pdb;
-      pdb.set_trace()
       nz = self.nz
       nh = self.nh
       nw = self.nw
