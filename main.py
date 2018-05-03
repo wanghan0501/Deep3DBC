@@ -182,8 +182,8 @@ def train(data_loader, net, loss, epoch, optimizer, save_dir):
   for param_group in optimizer.param_groups:
     print('Epoch %03d (lr %.5f)' % (epoch, param_group['lr']))
   print('Train:      tpr %3.2f, tnr %3.2f, total pos %d, total neg %d, time %3.2f' % (
-    100.0 * np.sum(metrics[:, 6]) / np.sum(metrics[:, 7]),
-    100.0 * np.sum(metrics[:, 8]) / np.sum(metrics[:, 9]),
+    100.0 * np.sum(metrics[:, 6]) / (np.sum(metrics[:, 7])+0.0001),
+    100.0 * np.sum(metrics[:, 8]) / (np.sum(metrics[:, 9])+0.0001),
     np.sum(metrics[:, 7]),
     np.sum(metrics[:, 9]),
     end_time - start_time))
