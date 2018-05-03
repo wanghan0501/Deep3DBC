@@ -24,7 +24,7 @@ from torch.optim.lr_scheduler import StepLR
 from dataset.loader import get_test_loader, get_train_loader
 from layers.bounding_box_layer import PredictBoundingBox
 from layers.cores import nms
-from layers.loss_layer import Loss
+from layers.loss_layer import DetectorLoss
 from model.detector_model import Model
 from utils.config_util import config
 from utils.gpu_util import set_gpu
@@ -76,7 +76,7 @@ def main():
   torch.cuda.manual_seed_all(args.seed)
 
   net = Model()
-  loss = Loss(config['num_hard'])
+  loss = DetectorLoss(config['num_hard'])
   get_pbb = PredictBoundingBox(config)
 
   start_epoch = args.start_epoch
@@ -133,8 +133,6 @@ def main():
 
   for epoch in range(start_epoch, args.epochs + 1):
     scheduler.step()
-    for param_group in optimizer.param_groups:
-      print("Current LR : {}".format(param_group['lr']))
     train(train_loader, net, loss, epoch, optimizer, save_dir)
 
 
@@ -153,7 +151,7 @@ def train(data_loader, net, loss, epoch, optimizer, save_dir):
     optimizer.zero_grad()
     loss_output[0].backward()
     optimizer.step()
-    loss_output[0] = loss_output[0].data[0]
+    loss_output[0] = loss_output[0].data.item()
     metrics.append(loss_output)
 
     end_time = time.time()
@@ -181,7 +179,8 @@ def train(data_loader, net, loss, epoch, optimizer, save_dir):
   end_time = time.time()
 
   metrics = np.asarray(metrics, np.float32)
-  print('Epoch %03d (lr %.5f)' % (epoch, lr))
+  for param_group in optimizer.param_groups:
+    print('Epoch %03d (lr %.5f)' % (epoch, param_group['lr']))
   print('Train:      tpr %3.2f, tnr %3.2f, total pos %d, total neg %d, time %3.2f' % (
     100.0 * np.sum(metrics[:, 6]) / np.sum(metrics[:, 7]),
     100.0 * np.sum(metrics[:, 8]) / np.sum(metrics[:, 9]),

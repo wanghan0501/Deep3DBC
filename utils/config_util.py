@@ -9,13 +9,14 @@ Copyright © 2017 Wang Han. SCU. All Rights Reserved.
 config = {}
 
 # data
-config['preprocess_result_path'] = '/root/workspace/preprocessing_4_9/'
-config['train_split_path'] = '/root/workspace/train_new_4_9_g.npy'
+config['preprocess_result_path'] = '/root/workspace/preprocessing/results/'
+config['train_split_path'] = '/root/workspace/preprocessing/train.npy'
 config['test_split_path'] = '/root/workspace/test_new_4_9_g.npy'
 config['bbox_path'] = './results/res18/bbox/'
+config['label_path'] = ''
 
 # detector
-config['anchors'] = [10.0, 30.0, 60.0]
+config['anchors'] = [20.0, 40.0, 60.0]
 config['chanel'] = 1
 config['crop_size'] = [128, 128, 128]
 config['stride'] = 4
@@ -35,3 +36,24 @@ config['r_rand_crop'] = 0.3
 config['pad_value'] = 170
 config['augtype'] = {'flip': True, 'swap': False, 'scale': True, 'rotate': False}
 config['blacklist'] = []
+
+# classifier
+# config['classifier_crop_size'] = [96, 96, 96]
+# config['topk'] = 5
+# config['resample'] = None
+# config['preload_train'] = True
+# config['padmask'] = False
+# config['crop_size'] = [96, 96, 96]
+# config['scaleLim'] = [0.85, 1.15]
+# config['radiusLim'] = [6, 100]
+# config['jitter_range'] = 0.15
+# config['isScale'] = True
+# config['random_sample'] = True
+# config['T'] = 1
+# config['topk'] = 5
+# config['detect_th'] = 0.05
+# config['conf_th'] = -1
+# config['nms_th'] = 0.05
+# config['filling_value'] = 160
+# config['miss_ratio'] = 1
+# config['miss_thresh'] = 0.03

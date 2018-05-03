@@ -49,7 +49,7 @@ class DetectorDataset(Dataset):
     labels = []
 
     for idx in idcs:
-      label = np.load(os.path.join(self.data_dir, '%s_label.npy' % idx.zfill(3)))
+      label = np.load(os.path.join(self.data_dir, '%s_sphere_label.npy' % idx.zfill(3)))
       if np.all(label == 0):
         label = np.array([])
       labels.append(label)
@@ -267,7 +267,6 @@ class Crop(object):
       for i in range(len(bboxes)):
         for j in range(4):
           bboxes[i][j] = bboxes[i][j] * scale
-    shape_ = crop.shape[1:]
     return crop, target, bboxes, coord
 
 

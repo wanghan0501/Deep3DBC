@@ -6,14 +6,15 @@ E-mail address is hanwang.0501@gmail.com.
 Copyright © 2017 Wang Han. SCU. All Rights Reserved.
 """
 
+import torch.nn.functional as F
 from torch import nn
 
 from layers.cores import hard_mining
 
 
-class Loss(nn.Module):
+class DetectorLoss(nn.Module):
   def __init__(self, num_hard=0):
-    super(Loss, self).__init__()
+    super(DetectorLoss, self).__init__()
     self.sigmoid = nn.Sigmoid()
     self.classify_loss = nn.BCELoss()
     self.regress_loss = nn.SmoothL1Loss()
@@ -48,11 +49,11 @@ class Loss(nn.Module):
         self.regress_loss(pw, lw),
         self.regress_loss(pd, ld)]
 
-      regress_losses_data = [l.data[0] for l in regress_losses]
+      regress_losses_data = [l.data.item() for l in regress_losses]
       classify_loss = 0.5 * self.classify_loss(
         pos_prob, pos_labels[:, 0]) + 0.5 * self.classify_loss(
         neg_prob, neg_labels + 1)
-      pos_correct = (pos_prob.data >= 0.5).sum()
+      pos_correct = (pos_prob.data >= 0.5).sum().item()
       pos_total = len(pos_prob)
 
     else:
@@ -63,13 +64,23 @@ class Loss(nn.Module):
       pos_total = 0
       regress_losses_data = [0, 0, 0, 0]
 
-    classify_loss_data = classify_loss.data[0]
+    classify_loss_data = classify_loss.data.item()
 
     loss = classify_loss
     for regress_loss in regress_losses:
       loss += regress_loss
 
-    neg_correct = (neg_prob.data < 0.5).sum()
+    neg_correct = (neg_prob.data < 0.5).sum().item()
     neg_total = len(neg_prob)
 
     return [loss, classify_loss_data] + regress_losses_data + [pos_correct, pos_total, neg_correct, neg_total]
+
+
+class ClassifierLoss(nn.Module):
+  def __init__(self):
+    super(ClassifierLoss, self).__init__()
+    self.classify_loss = F.binary_cross_entropy()
+
+  def forward(self, output, labels):
+
+    pass
