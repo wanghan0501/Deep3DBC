@@ -9,33 +9,33 @@ Copyright © 2017 Wang Han. SCU. All Rights Reserved.
 config = {}
 
 # data
-config['preprocess_result_path'] = '/root/workspace/preprocessing/results/'
+config['preprocess_result_path'] = '/root/workspace/preprocessing/py3_results/'
 config['train_split_path'] = '/root/workspace/preprocessing/train.npy'
-config['test_split_path'] = '/root/workspace/test_new_4_9_g.npy'
+config['test_split_path'] = '/root/workspace/x.npy'
 config['bbox_path'] = './results/res18/bbox/'
 config['label_path'] = ''
 
 # detector
-config['anchors'] = [20.0, 40.0, 60.0]
-config['chanel'] = 1
-config['crop_size'] = [128, 128, 128]
-config['stride'] = 4
-config['max_stride'] = 16
-config['num_neg'] = 800
-config['th_neg'] = 0.02
-config['th_pos_train'] = 0.5
-config['th_pos_val'] = 1
-config['num_hard'] = 2
-config['bound_size'] = 12
-config['reso'] = 1
+config['detector_anchors'] = [30.0, 60.0, 100.0]
+config['detector_chanel'] = 1
+config['detector_crop_size'] = [192, 192, 192]
+config['detector_stride'] = 4
+config['detector_bound_size'] = 12
+config['detector_max_stride'] = 16
+config['detector_num_neg'] = 800
+config['detector_th_neg'] = 0.02
+config['detector_th_pos_train'] = 0.5
+config['detector_th_pos_val'] = 1
+config['detector_num_hard'] = 2
+config['detector_reso'] = 1
 config['sizelim'] = 0.
 config['sizelim2'] = 20
 config['sizelim3'] = 50
-config['aug_scale'] = True
-config['r_rand_crop'] = 0.3
-config['pad_value'] = 170
-config['augtype'] = {'flip': True, 'swap': False, 'scale': True, 'rotate': False}
-config['blacklist'] = []
+config['detector_aug_scale'] = True
+config['detector_r_rand_crop'] = 0.3
+config['detector_pad_value'] = 170
+config['detector_augtype'] = {'flip': True, 'swap': False, 'scale': True, 'rotate': False}
+config['detector_blacklist'] = []
 
 # classifier
 # config['classifier_crop_size'] = [96, 96, 96]
@@ -47,7 +47,7 @@ config['blacklist'] = []
 # config['scaleLim'] = [0.85, 1.15]
 # config['radiusLim'] = [6, 100]
 # config['jitter_range'] = 0.15
-# config['isScale'] = True
+# config['is_scale'] = True
 # config['random_sample'] = True
 # config['T'] = 1
 # config['topk'] = 5

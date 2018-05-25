@@ -76,7 +76,7 @@ def main():
   torch.cuda.manual_seed_all(args.seed)
 
   net = Model()
-  loss = DetectorLoss(config['num_hard'])
+  loss = DetectorLoss(config['detector_num_hard'])
   get_pbb = PredictBoundingBox(config)
 
   start_epoch = args.start_epoch
@@ -141,7 +141,7 @@ def train(data_loader, net, loss, epoch, optimizer, save_dir):
   net.train()
 
   metrics = []
-  for i, (data, target, coord) in enumerate(data_loader):
+  for batch_idx, (data, target, coord) in enumerate(data_loader):
     data = Variable(data.cuda(async=True))
     target = Variable(target.cuda(async=True))
     coord = Variable(coord.cuda(async=True))
@@ -156,12 +156,12 @@ def train(data_loader, net, loss, epoch, optimizer, save_dir):
 
     end_time = time.time()
 
-    if (i % 100 == 0):
-      print('[Train] tpr %3.2f, tnr %3.2f, total pos %d, total neg %d, time %3.2f' % (
-        100.0 * np.sum(loss_output[6]) / (np.sum(loss_output[7]) + 0.001),
-        100.0 * np.sum(loss_output[8]) / (np.sum(loss_output[9]) + 0.001),
-        np.sum(loss_output[7]),
+    if batch_idx % 100 == 0:
+      print('[Train] TPR {:3.2f}, TNR {:3.2f}, Total Positive {}, Total Negative {}, Time {:3.2f}'.format(
+        100.0 * np.sum(loss_output[8]) / (np.sum(loss_output[9])),
+        100.0 * np.sum(loss_output[10]) / (np.sum(loss_output[11])),
         np.sum(loss_output[9]),
+        np.sum(loss_output[11]),
         end_time - start_time))
 
   if epoch % args.save_freq == 0:
@@ -174,27 +174,31 @@ def train(data_loader, net, loss, epoch, optimizer, save_dir):
       'save_dir': save_dir,
       'state_dict': state_dict,
       'args': args},
-      os.path.join(save_dir, '%03d.ckpt' % epoch))
+      os.path.join(save_dir, '{:03d}.ckpt'.format(epoch)))
 
   end_time = time.time()
 
   metrics = np.asarray(metrics, np.float32)
   for param_group in optimizer.param_groups:
-    print('Epoch %03d (lr %.5f)' % (epoch, param_group['lr']))
-  print('Train:      tpr %3.2f, tnr %3.2f, total pos %d, total neg %d, time %3.2f' % (
-    100.0 * np.sum(metrics[:, 6]) / (np.sum(metrics[:, 7]) + 0.0001),
-    100.0 * np.sum(metrics[:, 8]) / (np.sum(metrics[:, 9]) + 0.0001),
-    np.sum(metrics[:, 7]),
+    print('Epoch {:03d}, LR {:.5f})'.format(epoch, param_group['lr']))
+  print('[Train] Epoch {}, TPR {:3.2f}, TNR {:3.2f}, Total Positive {}, Total Negative {}, Time {:3.2f}'.format(
+    epoch,
+    100.0 * np.sum(metrics[:, 8]) / (np.sum(metrics[:, 9])),
+    100.0 * np.sum(metrics[:, 10]) / (np.sum(metrics[:, 11])),
     np.sum(metrics[:, 9]),
+    np.sum(metrics[:, 11]),
     end_time - start_time))
 
-  print('Loss %2.4f, classify loss %2.4f, regress loss %2.4f, %2.4f, %2.4f, %2.4f' % (
+  print('Loss {:2.4f}, Classify Loss {:2.4f}, Regress Loss {:2.4f}, {:2.4f}, {:2.4f}, {:2.4f}, {:2.4f}, {:2.4f}'.format(
     np.mean(metrics[:, 0]),
     np.mean(metrics[:, 1]),
     np.mean(metrics[:, 2]),
     np.mean(metrics[:, 3]),
     np.mean(metrics[:, 4]),
-    np.mean(metrics[:, 5])))
+    np.mean(metrics[:, 5]),
+    np.mean(metrics[:, 6]),
+    np.mean(metrics[:, 7])
+  ))
 
 
 def test(data_loader, net, get_pbb, save_dir, config):
@@ -257,7 +261,7 @@ def test(data_loader, net, get_pbb, save_dir, config):
   np.save(os.path.join(save_dir, 'namelist.npy'), namelist)
   end_time = time.time()
 
-  print('elapsed time is %3.2f seconds' % (end_time - start_time))
+  print('Elapsed time is {:3.2f} seconds'.format(end_time - start_time))
 
 
 if __name__ == '__main__':

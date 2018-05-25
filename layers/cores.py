@@ -28,7 +28,7 @@ def nms(output, nms_th):
     bbox = output[i]
     flag = 1
     for j in range(len(bboxes)):
-      if iou(bbox[1:5], bboxes[j][1:5]) >= nms_th:
+      if iou(bbox[1:7], bboxes[j][1:7]) >= nms_th:
         flag = -1
         break
     if flag == 1:
@@ -39,20 +39,25 @@ def nms(output, nms_th):
 
 
 def iou(box0, box1):
-  r0 = box0[3] / 2
-  s0 = box0[:3] - r0
-  e0 = box0[:3] + r0
+  rzhw0 = box0[4:]
+  s0 = box0[:3] - rzhw0
+  e0 = box0[:3] + rzhw0
 
-  r1 = box1[3] / 2
-  s1 = box1[:3] - r1
-  e1 = box1[:3] + r1
+  rzhw1 = box1[4:]
+  s1 = box1[:3] - rzhw1
+  e1 = box1[:3] + rzhw1
 
   overlap = []
   for i in range(len(s0)):
     overlap.append(max(0, min(e0[i], e1[i]) - max(s0[i], s1[i])))
 
   intersection = overlap[0] * overlap[1] * overlap[2]
-  union = box0[3] * box0[3] * box0[3] + box1[3] * box1[3] * box1[3] - intersection
+
+  dzhw0 = 2 * rzhw0
+  dzhw1 = 2 * rzhw1
+  union = dzhw0[0] * dzhw0[1] * dzhw0[2] + \
+          dzhw1[0] * dzhw1[1] * dzhw1[2] - intersection
+
   return intersection / union
 
 
@@ -68,7 +73,7 @@ def acc(pbb, lbb, conf_th, nms_th, detect_th):
     flag = 0
     bestscore = 0
     for i, l in enumerate(lbb):
-      score = iou(p[1:5], l)
+      score = iou(p[1:7], l)
       if score > bestscore:
         bestscore = score
         besti = i
@@ -85,7 +90,7 @@ def acc(pbb, lbb, conf_th, nms_th, detect_th):
     if l_flag[i] == 0:
       score = []
       for p in pbb:
-        score.append(iou(p[1:5], l))
+        score.append(iou(p[1:7], l))
       if len(score) != 0:
         bestscore = np.max(score)
       else:

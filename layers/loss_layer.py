@@ -22,13 +22,13 @@ class DetectorLoss(nn.Module):
 
   def forward(self, output, labels, train=True):
     batch_size = labels.size(0)
-    output = output.view(-1, 5)
-    labels = labels.view(-1, 5)
+    output = output.view(-1, 7)
+    labels = labels.view(-1, 7)
 
     pos_idcs = labels[:, 0] > 0.5
-    pos_idcs = pos_idcs.unsqueeze(1).expand(pos_idcs.size(0), 5)
-    pos_output = output[pos_idcs].view(-1, 5)
-    pos_labels = labels[pos_idcs].view(-1, 5)
+    pos_idcs = pos_idcs.unsqueeze(1).expand(pos_idcs.size(0), 7)
+    pos_output = output[pos_idcs].view(-1, 7)
+    pos_labels = labels[pos_idcs].view(-1, 7)
 
     neg_idcs = labels[:, 0] < -0.5
     neg_output = output[:, 0][neg_idcs]
@@ -40,14 +40,19 @@ class DetectorLoss(nn.Module):
 
     if len(pos_output) > 0:
       pos_prob = self.sigmoid(pos_output[:, 0])
-      pz, ph, pw, pd = pos_output[:, 1], pos_output[:, 2], pos_output[:, 3], pos_output[:, 4]
-      lz, lh, lw, ld = pos_labels[:, 1], pos_labels[:, 2], pos_labels[:, 3], pos_labels[:, 4]
+      pz, ph, pw, prz, prh, prw = pos_output[:, 1], pos_output[:, 2], pos_output[:, 3], \
+                                  pos_output[:, 4], pos_output[:, 5], pos_output[:, 6]
+      lz, lh, lw, lrz, lrh, lrw = pos_labels[:, 1], pos_labels[:, 2], pos_labels[:, 3], \
+                                  pos_labels[:, 4], pos_labels[:, 5], pos_labels[:, 6]
 
       regress_losses = [
         self.regress_loss(pz, lz),
         self.regress_loss(ph, lh),
         self.regress_loss(pw, lw),
-        self.regress_loss(pd, ld)]
+        self.regress_loss(prz, lrz),
+        self.regress_loss(prh, lrh),
+        self.regress_loss(prw, lrw),
+      ]
 
       regress_losses_data = [l.data.item() for l in regress_losses]
       classify_loss = 0.5 * self.classify_loss(
@@ -57,12 +62,12 @@ class DetectorLoss(nn.Module):
       pos_total = len(pos_prob)
 
     else:
-      regress_losses = [0, 0, 0, 0]
+      regress_losses = [0, 0, 0, 0, 0, 0]
       classify_loss = 0.5 * self.classify_loss(
         neg_prob, neg_labels + 1)
       pos_correct = 0
       pos_total = 0
-      regress_losses_data = [0, 0, 0, 0]
+      regress_losses_data = [0, 0, 0, 0, 0, 0]
 
     classify_loss_data = classify_loss.data.item()
 
@@ -82,5 +87,4 @@ class ClassifierLoss(nn.Module):
     self.classify_loss = F.binary_cross_entropy()
 
   def forward(self, output, labels):
-
     pass

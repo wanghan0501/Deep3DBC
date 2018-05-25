@@ -14,7 +14,8 @@ from utils.config_util import config
 
 class Model(nn.Module):
   def __init__(self):
-    super(Model, self).__init__()
+    super().__init__()
+
     # The first few layers consumes the most memory, so use simple convolution to save memory.
     # Call these layers preBlock, i.e., before the residual blocks of later layers.
     self.preBlock = nn.Sequential(
@@ -75,7 +76,7 @@ class Model(nn.Module):
     self.output = nn.Sequential(nn.Conv3d(self.featureNum_back[0], 64, kernel_size=1),
                                 nn.ReLU(),
                                 # nn.Dropout3d(p = 0.3),
-                                nn.Conv3d(64, 5 * len(config['anchors']), kernel_size=1))
+                                nn.Conv3d(64, 7 * len(config['detector_anchors']), kernel_size=1))
 
   def forward(self, x, coord):
     out = self.preBlock(x)  # 16
@@ -100,6 +101,6 @@ class Model(nn.Module):
     out = self.output(comb2)
     size = out.size()
     out = out.view(out.size(0), out.size(1), -1)
-    out = out.transpose(1, 2).contiguous().view(size[0], size[2], size[3], size[4], len(config['anchors']), 5)
+    out = out.transpose(1, 2).contiguous().view(size[0], size[2], size[3], size[4], len(config['detector_anchors']), 7)
 
     return out
